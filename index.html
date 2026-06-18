@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#f6d9c8">
+<meta name="robots" content="noindex, nofollow">
+<title>수업나눔카페 보드게임 소모임</title>
+<style>
+:root{
+  --cream:#fff8f0; --peach:#f7c9b0; --peach-deep:#e89e7e;
+  --mint:#bfe3d0; --lav:#d9c9ec; --ink:#5a4a42; --sub:#a08e82;
+  --card:#fffdfa; --line:#f0e2d6;
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+html,body{margin:0; padding:0;}
+body{
+  font-family:'Pretendard','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;
+  background:linear-gradient(160deg,#fff3e9 0%,#fdeef2 45%,#eef2fb 100%);
+  color:var(--ink); min-height:100vh; overflow-x:hidden;
+  display:flex; align-items:center; justify-content:center; padding:24px 16px;
+}
+
+/* 떠다니는 보드게임 배경 */
+.floaties{position:fixed; inset:0; pointer-events:none; z-index:0; overflow:hidden;}
+.floaty{position:absolute; font-size:32px; opacity:.18; animation:float 12s ease-in-out infinite;}
+@keyframes float{
+  0%,100%{transform:translateY(0) rotate(0deg);}
+  50%{transform:translateY(-26px) rotate(14deg);}
+}
+
+/* 초대장 카드 */
+.card{
+  position:relative; z-index:2; width:100%; max-width:420px; background:var(--card);
+  border-radius:28px; padding:34px 28px 30px; text-align:center;
+  box-shadow:0 18px 50px rgba(195,150,125,.22); border:1px solid #fcefe4;
+  animation:pop .7s cubic-bezier(.2,.9,.3,1.2);
+}
+@keyframes pop{from{opacity:0; transform:translateY(30px) scale(.96);} to{opacity:1; transform:none;}}
+
+.badge{display:inline-block; background:linear-gradient(135deg,var(--mint),#cfe9da);
+  color:#4e8a6e; font-size:12px; font-weight:800; padding:6px 14px; border-radius:20px;
+  letter-spacing:.3px; margin-bottom:16px; box-shadow:0 3px 10px rgba(120,180,150,.2);}
+
+.dice-title{font-size:46px; margin:2px 0 6px; animation:wobble 3s ease-in-out infinite;}
+@keyframes wobble{0%,100%{transform:rotate(-6deg);}50%{transform:rotate(6deg);}}
+
+h1{margin:6px 0 6px; font-size:25px; font-weight:800; letter-spacing:-.5px; line-height:1.3;
+  color:#6b4f43;}
+h1 .hl{background:linear-gradient(transparent 58%, #ffe1cf 58%); padding:0 3px;}
+.lead{font-size:14.5px; color:var(--sub); line-height:1.65; margin:10px 4px 22px;}
+
+.info{background:#fdf4ec; border-radius:18px; padding:16px 14px; margin:0 0 18px;
+  border:1px dashed #f0d3bd;}
+.info-row{display:flex; align-items:center; gap:10px; padding:8px 6px; font-size:14.5px;}
+.info-row + .info-row{border-top:1px solid #f4e4d6;}
+.info-row .ic{font-size:20px; flex:0 0 26px;}
+.info-row .lb{color:var(--sub); font-weight:700; flex:0 0 52px; text-align:left; font-size:12.5px;}
+.info-row .vl{color:var(--ink); font-weight:700; text-align:left; flex:1;}
+
+.games{display:flex; flex-wrap:wrap; gap:7px; justify-content:center; margin:4px 0 22px;}
+.game-chip{background:#f3ecfb; color:#7b66a8; font-size:12px; font-weight:700;
+  padding:6px 12px; border-radius:16px;}
+
+.rsvp{width:100%; border:none; padding:16px; border-radius:18px; cursor:pointer;
+  font-family:inherit; font-size:16px; font-weight:800; color:#fff;
+  background:linear-gradient(135deg,var(--peach),var(--peach-deep));
+  box-shadow:0 8px 22px rgba(220,150,120,.35); transition:transform .12s;}
+.rsvp:active{transform:scale(.96);}
+.foot{margin-top:18px; font-size:11.5px; color:#c3b3a8; line-height:1.6;}
+
+/* 비밀 주사위 (공모자 진입구) */
+.secret-dice{position:fixed; right:14px; bottom:14px; z-index:5; font-size:26px;
+  opacity:.32; cursor:pointer; user-select:none; transition:transform .2s, opacity .2s;
+  filter:grayscale(.3);}
+.secret-dice:hover{opacity:.6; transform:rotate(20deg) scale(1.1);}
+
+/* 토스트 */
+.toast{position:fixed; left:50%; bottom:30px; transform:translateX(-50%) translateY(40px);
+  background:#fff; color:var(--ink); padding:13px 22px; border-radius:18px; font-weight:700;
+  font-size:14px; box-shadow:0 10px 30px rgba(180,140,120,.3); opacity:0; z-index:30;
+  transition:.35s; pointer-events:none; white-space:nowrap;}
+.toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+
+/* 비밀 모달 */
+.modal-bg{position:fixed; inset:0; z-index:40; display:none; align-items:center;
+  justify-content:center; padding:20px; background:rgba(90,74,66,.45); backdrop-filter:blur(3px);}
+.modal-bg.show{display:flex; animation:fadein .3s;}
+@keyframes fadein{from{opacity:0;}to{opacity:1;}}
+.secret{background:linear-gradient(165deg,#fff6fb 0%,#fdf0e8 100%); width:100%; max-width:400px;
+  border-radius:26px; padding:30px 26px; text-align:center; position:relative;
+  box-shadow:0 24px 60px rgba(150,100,120,.35); animation:pop .5s cubic-bezier(.2,.9,.3,1.2);}
+.secret .shh{font-size:40px; margin-bottom:4px;}
+.secret h2{margin:6px 0 4px; font-size:22px; color:#d06a8e; font-weight:800;}
+.secret .who{font-size:18px; font-weight:800; color:#6b4f43; margin:14px 0 4px;}
+.secret .who b{color:#e08a3c;}
+.secret .cake{font-size:50px; margin:6px 0;}
+.plan{background:#fffdfa; border-radius:18px; padding:16px; margin:16px 0 8px; text-align:left;
+  border:1px solid #f3e3ea;}
+.plan h3{margin:0 0 10px; font-size:13px; color:#d06a8e; font-weight:800; text-align:center;}
+.plan ul{margin:0; padding-left:18px;}
+.plan li{font-size:13.5px; color:var(--ink); line-height:1.75; margin-bottom:3px;}
+.plan li b{color:#c75a2a;}
+.secret .warn{font-size:13px; color:#a08e82; font-weight:700; margin-top:12px;}
+.secret-close{margin-top:16px; width:100%; padding:13px; border:none; border-radius:15px;
+  background:#f3e3ea; color:#b06a85; font-weight:800; font-size:14px; cursor:pointer; font-family:inherit;}
+
+/* 컨페티 */
+.confetti{position:fixed; top:-12px; z-index:45; pointer-events:none; border-radius:2px;}
+.emoji-fall{position:fixed; top:0; z-index:46; pointer-events:none; will-change:transform;}
+</style>
+</head>
+<body>
+
+<div class="floaties" id="floaties"></div>
+
+<div class="card">
+  <span class="badge">수업나눔카페 소모임</span>
+  <div class="dice-title">🎲</div>
+  <h1>오늘, <span class="hl">보드게임</span> 한 판<br>어떠세요?</h1>
+  <p class="lead">쉬어가는 5·6교시,<br>머리 식힐 겸 보드게임 한 판 같이 해요.<br>웃고 떠들다 보면 금방 친해진답니다 ☕</p>
+
+  <div class="info">
+    <div class="info-row"><span class="ic">📅</span><span class="lb">날짜</span><span class="vl">2026. 6. 18 (목)</span></div>
+    <div class="info-row"><span class="ic">⏰</span><span class="lb">시간</span><span class="vl">5 · 6교시</span></div>
+    <div class="info-row"><span class="ic">📍</span><span class="lb">장소</span><span class="vl">수업나눔카페</span></div>
+    <div class="info-row"><span class="ic">🎒</span><span class="lb">준비물</span><span class="vl">몸과 마음만 살포시!</span></div>
+  </div>
+
+  <div class="games">
+    <span class="game-chip">📺 탑텐티비</span>
+    <span class="game-chip">🦆 거위가 꽥</span>
+    <span class="game-chip">🐉 티츄</span>
+    <span class="game-chip">🐭 무스무리 모여라</span>
+  </div>
+
+  <button class="rsvp" onclick="partyRsvp()">참석할래요! ✋</button>
+  <p class="foot">함께 모여 한 판, 두 판 🎲<br>편하게 와서 즐기다 가세요</p>
+</div>
+
+<div class="secret-dice" onclick="partySecret()" title="🎲">🎲</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="modal-bg" id="secretBg" onclick="if(event.target===this)partyCloseSecret()">
+  <div class="secret">
+    <div class="shh">🤫</div>
+    <h2>쉿—! 여긴 비밀이에요</h2>
+    <div class="cake">🎂🎉</div>
+    <div class="who">사실은 <b>혜리미 쌤</b> (윤혜림 선생님)<br>깜짝 생일파티예요!</div>
+    <div class="plan">
+      <h3>― 공모자 작전 안내 ―</h3>
+      <ul>
+        <li>겉으론 <b>보드게임 소모임</b>인 척! 티 내지 말기 🙊</li>
+        <li>오늘 <b>5·6교시</b>, <b>수업나눔카페</b>로 모여주세요</li>
+        <li>혜리미 쌤껜 그냥 "보드게임 하러 가자~" 하고 데려오기</li>
+        <li>문 열면 다 같이 <b>"서프라이즈! 🎉"</b></li>
+      </ul>
+    </div>
+    <div class="warn">웃기고 다정한 우리 혜리미 쌤,<br>오늘만큼은 주인공으로 만들어줘요 💕</div>
+    <button class="secret-close" onclick="partyCloseSecret()">작전 접수 완료! 🫡</button>
+  </div>
+</div>
+
+<script>
+/* 떠다니는 배경 */
+(function(){
+  const icons=['🎲','🃏','🧩','🎯','♟️','🎮','🀄','🎴'];
+  const wrap=document.getElementById('floaties');
+  for(let i=0;i<14;i++){
+    const s=document.createElement('span');
+    s.className='floaty';
+    s.textContent=icons[i%icons.length];
+    s.style.left=(Math.random()*100)+'%';
+    s.style.top=(Math.random()*100)+'%';
+    s.style.fontSize=(24+Math.random()*30)+'px';
+    s.style.animationDelay=(Math.random()*8)+'s';
+    s.style.animationDuration=(9+Math.random()*8)+'s';
+    wrap.appendChild(s);
+  }
+})();
+
+/* 참석 버튼 (위장용 — 그냥 귀여운 반응) */
+function partyRsvp(){
+  showToast('🎉 한 자리 예약 완료! 이따 만나요~');
+  dropConfetti(110);
+  rainEmojis();
+}
+/* 이모지 와르르 */
+function rainEmojis(){
+  const ems=['🎲','🃏','🎉','🎊','✨','🎈','🥳','🍾','⭐','🎯','🦆','🐉','🐭','📺'];
+  for(let i=0;i<34;i++){
+    const e=document.createElement('div');
+    e.className='emoji-fall';
+    e.textContent=ems[Math.floor(Math.random()*ems.length)];
+    e.style.left=(Math.random()*100)+'vw';
+    e.style.fontSize=(22+Math.random()*24)+'px';
+    document.body.appendChild(e);
+    const fall=1700+Math.random()*1700;
+    const drift=Math.random()*220-110;
+    const delay=Math.random()*450;
+    e.animate([
+      {transform:'translate(0,-44px) rotate(0deg)', opacity:0},
+      {transform:'translate(0,-8px) rotate(0deg)', opacity:1, offset:.08},
+      {transform:`translate(${drift}px, 112vh) rotate(${Math.random()*760-380}deg)`, opacity:.95}
+    ],{duration:fall, delay:delay, easing:'cubic-bezier(.3,.6,.5,1)'}).onfinish=()=>e.remove();
+  }
+}
+let toastTimer=null;
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.classList.remove('show'),2600);
+}
+
+/* 비밀 모달 */
+function partySecret(){
+  document.getElementById('secretBg').classList.add('show');
+  dropConfetti();
+}
+function partyCloseSecret(){
+  document.getElementById('secretBg').classList.remove('show');
+}
+
+/* 컨페티 */
+function dropConfetti(count){
+  count = count || 40;
+  const colors=['#f7c9b0','#bfe3d0','#d9c9ec','#ffd9e6','#ffe1a8','#f6a5c0'];
+  for(let i=0;i<count;i++){
+    const c=document.createElement('div');
+    c.className='confetti';
+    const size=6+Math.random()*8;
+    c.style.width=size+'px'; c.style.height=(size*1.4)+'px';
+    c.style.left=(Math.random()*100)+'vw';
+    c.style.background=colors[Math.floor(Math.random()*colors.length)];
+    c.style.opacity=.85;
+    document.body.appendChild(c);
+    const fall=1400+Math.random()*1400;
+    const drift=(Math.random()*160-80);
+    c.animate([
+      {transform:'translate(0,0) rotate(0deg)', opacity:1},
+      {transform:`translate(${drift}px, 110vh) rotate(${Math.random()*720-360}deg)`, opacity:.9}
+    ],{duration:fall, easing:'cubic-bezier(.3,.6,.5,1)'}).onfinish=()=>c.remove();
+  }
+}
+</script>
+</body>
+</html>
