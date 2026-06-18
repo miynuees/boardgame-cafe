@@ -18,7 +18,8 @@ body{
   font-family:'Pretendard','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;
   background:linear-gradient(160deg,#fff3e9 0%,#fdeef2 45%,#eef2fb 100%);
   color:var(--ink); min-height:100vh; overflow-x:hidden;
-  display:flex; align-items:center; justify-content:center; padding:24px 16px;
+  display:flex; flex-direction:column; align-items:center; justify-content:flex-start;
+  gap:18px; padding:24px 16px 44px;
 }
 
 /* 떠다니는 보드게임 배경 */
@@ -100,6 +101,35 @@ h1 .hl{background:linear-gradient(transparent 58%, #ffe1cf 58%); padding:0 3px;}
 .secret-close{margin-top:16px; width:100%; padding:13px; border:none; border-radius:15px;
   background:#f3e3ea; color:#b06a85; font-weight:800; font-size:14px; cursor:pointer; font-family:inherit;}
 
+/* 게시판 */
+.board{position:relative; z-index:2; width:100%; max-width:420px; background:var(--card);
+  border-radius:24px; padding:22px 20px; box-shadow:0 14px 40px rgba(195,150,125,.18);
+  border:1px solid #fcefe4; animation:pop .7s cubic-bezier(.2,.9,.3,1.2);}
+.board h3{margin:0 0 2px; font-size:18px; color:#6b4f43; text-align:center;}
+.board-sub{margin:0 0 16px; font-size:12.5px; color:var(--sub); text-align:center; line-height:1.5;}
+.board-list{display:flex; flex-direction:column; gap:10px;}
+.board-empty{text-align:center; color:#c3b3a8; font-size:13px; padding:16px 0; line-height:1.6;}
+.post{background:#fdf4ec; border-radius:14px; padding:11px 14px; border:1px solid #f3e2d4;
+  animation:pop .4s ease;}
+.post-nick{font-size:12.5px; font-weight:800; color:var(--peach-deep); margin-bottom:3px;}
+.post-msg{font-size:14px; color:var(--ink); line-height:1.5; word-break:break-word; text-align:left;}
+
+/* 참석 입력 모달 */
+.join{background:#fffdfa; width:100%; max-width:380px; border-radius:24px; padding:26px 22px;
+  text-align:center; box-shadow:0 24px 60px rgba(150,100,120,.3); animation:pop .45s cubic-bezier(.2,.9,.3,1.2);}
+.join h3{margin:0 0 2px; font-size:20px; color:#6b4f43;}
+.join-sub{margin:0 0 18px; font-size:13px; color:var(--sub);}
+.join input, .join textarea{width:100%; border:1.5px solid var(--line); border-radius:14px;
+  padding:12px 14px; font-family:inherit; font-size:15px; margin-bottom:10px; box-sizing:border-box;
+  outline:none; transition:border-color .15s;}
+.join input:focus, .join textarea:focus{border-color:var(--peach);}
+.join textarea{min-height:80px; resize:vertical;}
+.join-btn{width:100%; border:none; padding:14px; border-radius:15px; font-family:inherit;
+  font-size:16px; font-weight:800; color:#fff; cursor:pointer;
+  background:linear-gradient(135deg,var(--peach),var(--peach-deep)); box-shadow:0 8px 20px rgba(220,150,120,.3);}
+.join-cancel{width:100%; border:none; background:none; color:var(--sub); font-family:inherit;
+  font-size:13px; font-weight:700; padding:10px; margin-top:6px; cursor:pointer;}
+
 /* 컨페티 */
 .confetti{position:fixed; top:-12px; z-index:45; pointer-events:none; border-radius:2px;}
 .emoji-fall{position:fixed; top:0; z-index:46; pointer-events:none; will-change:transform;}
@@ -133,6 +163,23 @@ h1 .hl{background:linear-gradient(transparent 58%, #ffe1cf 58%); padding:0 3px;}
   <p class="foot">함께 모여 한 판, 두 판 🎲<br>편하게 와서 즐기다 가세요</p>
 </div>
 
+<div class="board">
+  <h3>💬 참가자 한마디</h3>
+  <p class="board-sub">참석 버튼 누르고 기대평을 남겨보세요!</p>
+  <div id="boardList" class="board-list"><p class="board-empty">불러오는 중…</p></div>
+</div>
+
+<div class="modal-bg" id="joinBg" onclick="if(event.target===this)closeJoin()">
+  <div class="join">
+    <h3>참석 도장 쾅! ✋</h3>
+    <p class="join-sub">닉네임과 기대 한마디를 남겨주세요</p>
+    <input id="nickIn" type="text" placeholder="닉네임 (예: 미술쌤)" maxlength="20" autocomplete="off">
+    <textarea id="msgIn" placeholder="기대평 한마디! (예: 보드게임 너무 좋아요 🎲)" maxlength="100"></textarea>
+    <button class="join-btn" onclick="submitJoin()">남기기 🎉</button>
+    <button class="join-cancel" onclick="closeJoin()">닫기</button>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <div class="modal-bg" id="secretBg" onclick="if(event.target===this)partyCloseSecret()">
@@ -155,7 +202,73 @@ h1 .hl{background:linear-gradient(transparent 58%, #ffe1cf 58%); padding:0 3px;}
   </div>
 </div>
 
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
 <script>
+/* ===== Firebase 연결 ===== */
+const firebaseConfig = {
+  apiKey: "AIzaSyBtSooSc-eg4zMHQ_QF-ErmYJmtaYT1Fkg",
+  authDomain: "limi-88231.firebaseapp.com",
+  projectId: "limi-88231",
+  storageBucket: "limi-88231.firebasestorage.app",
+  messagingSenderId: "361025367626",
+  appId: "1:361025367626:web:19d4e19d54558d4a79c0b3"
+};
+let db=null;
+try{
+  firebase.initializeApp(firebaseConfig);
+  db = firebase.firestore();
+}catch(e){ console.error('Firebase 초기화 실패', e); }
+
+function esc(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+/* 실시간 게시판 구독 */
+function subscribeBoard(){
+  if(!db) return;
+  db.collection('guestbook').orderBy('ts','desc').onSnapshot(snap=>{
+    const list=document.getElementById('boardList');
+    if(snap.empty){ list.innerHTML='<p class="board-empty">아직 한마디가 없어요.<br>첫 번째 기대평을 남겨보세요! ✨</p>'; return; }
+    list.innerHTML = snap.docs.map(d=>{
+      const x=d.data();
+      return `<div class="post"><div class="post-nick">🎲 ${esc(x.nick||'익명')}</div>`
+        + `<div class="post-msg">${esc(x.msg||'')}</div></div>`;
+    }).join('');
+  }, err=>{
+    document.getElementById('boardList').innerHTML =
+      '<p class="board-empty">게시판을 불러오지 못했어요.<br>(Firestore 설정을 확인해 주세요)</p>';
+    console.error('게시판 구독 오류', err);
+  });
+}
+
+/* 참석 입력 모달 */
+function openJoin(){
+  document.getElementById('joinBg').classList.add('show');
+  setTimeout(()=>{ const n=document.getElementById('nickIn'); if(n) n.focus(); }, 100);
+}
+function closeJoin(){ document.getElementById('joinBg').classList.remove('show'); }
+function submitJoin(){
+  const nick=document.getElementById('nickIn').value.trim() || '익명';
+  const msg=document.getElementById('msgIn').value.trim();
+  if(!msg){ showToast('✏️ 기대평을 한마디 적어주세요!'); return; }
+  if(!db){ showToast('⚠️ 게시판 연결이 아직이에요'); return; }
+  const btn=document.querySelector('.join-btn');
+  btn.disabled=true; btn.textContent='남기는 중…';
+  db.collection('guestbook').add({
+    nick, msg, ts: firebase.firestore.FieldValue.serverTimestamp()
+  }).then(()=>{
+    closeJoin();
+    document.getElementById('nickIn').value='';
+    document.getElementById('msgIn').value='';
+    dropConfetti(110); rainEmojis();
+    showToast('🎉 등록 완료! 이따 만나요~');
+  }).catch(e=>{
+    showToast('앗, 저장 실패 😢 다시 시도해 주세요');
+    console.error(e);
+  }).finally(()=>{ btn.disabled=false; btn.textContent='남기기 🎉'; });
+}
+
+subscribeBoard();
+
 /* 떠다니는 배경 */
 (function(){
   const icons=['🎲','🃏','🧩','🎯','♟️','🎮','🀄','🎴'];
@@ -173,12 +286,8 @@ h1 .hl{background:linear-gradient(transparent 58%, #ffe1cf 58%); padding:0 3px;}
   }
 })();
 
-/* 참석 버튼 (위장용 — 그냥 귀여운 반응) */
-function partyRsvp(){
-  showToast('🎉 한 자리 예약 완료! 이따 만나요~');
-  dropConfetti(110);
-  rainEmojis();
-}
+/* 참석 버튼 → 닉네임·기대평 입력 모달 */
+function partyRsvp(){ openJoin(); }
 /* 이모지 와르르 */
 function rainEmojis(){
   const ems=['🎲','🃏','🎉','🎊','✨','🎈','🥳','🍾','⭐','🎯','🦆','🐉','🐭','📺'];
