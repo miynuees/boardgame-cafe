@@ -42,7 +42,8 @@ body{
   color:#4e8a6e; font-size:12px; font-weight:800; padding:6px 14px; border-radius:20px;
   letter-spacing:.3px; margin-bottom:16px; box-shadow:0 3px 10px rgba(120,180,150,.2);}
 
-.dice-title{font-size:46px; margin:2px 0 6px; animation:wobble 3s ease-in-out infinite;}
+.dice-title{font-size:46px; margin:2px 0 6px; animation:wobble 3s ease-in-out infinite;
+  cursor:pointer; display:inline-block; user-select:none;}
 @keyframes wobble{0%,100%{transform:rotate(-6deg);}50%{transform:rotate(6deg);}}
 
 h1{margin:6px 0 6px; font-size:25px; font-weight:800; letter-spacing:-.5px; line-height:1.3;
@@ -68,12 +69,6 @@ h1 .hl{background:linear-gradient(transparent 58%, #ffe1cf 58%); padding:0 3px;}
   box-shadow:0 8px 22px rgba(220,150,120,.35); transition:transform .12s;}
 .rsvp:active{transform:scale(.96);}
 .foot{margin-top:18px; font-size:11.5px; color:#c3b3a8; line-height:1.6;}
-
-/* 비밀 주사위 (공모자 진입구) */
-.secret-dice{position:fixed; right:14px; bottom:14px; z-index:5; font-size:26px;
-  opacity:.32; cursor:pointer; user-select:none; transition:transform .2s, opacity .2s;
-  filter:grayscale(.3);}
-.secret-dice:hover{opacity:.6; transform:rotate(20deg) scale(1.1);}
 
 /* 토스트 */
 .toast{position:fixed; left:50%; bottom:30px; transform:translateX(-50%) translateY(40px);
@@ -116,7 +111,7 @@ h1 .hl{background:linear-gradient(transparent 58%, #ffe1cf 58%); padding:0 3px;}
 
 <div class="card">
   <span class="badge">수업나눔카페 소모임</span>
-  <div class="dice-title">🎲</div>
+  <div class="dice-title" onclick="diceTap()">🎲</div>
   <h1>오늘, <span class="hl">보드게임</span> 한 판<br>어떠세요?</h1>
   <p class="lead">쉬어가는 5·6교시,<br>머리 식힐 겸 보드게임 한 판 같이 해요.<br>웃고 떠들다 보면 금방 친해진답니다 ☕</p>
 
@@ -137,8 +132,6 @@ h1 .hl{background:linear-gradient(transparent 58%, #ffe1cf 58%); padding:0 3px;}
   <button class="rsvp" onclick="partyRsvp()">참석할래요! ✋</button>
   <p class="foot">함께 모여 한 판, 두 판 🎲<br>편하게 와서 즐기다 가세요</p>
 </div>
-
-<div class="secret-dice" onclick="partySecret()" title="🎲">🎲</div>
 
 <div class="toast" id="toast"></div>
 
@@ -212,6 +205,15 @@ function showToast(msg){
   t.textContent=msg; t.classList.add('show');
   clearTimeout(toastTimer);
   toastTimer=setTimeout(()=>t.classList.remove('show'),2600);
+}
+
+/* 맨 위 주사위 5번 톡톡 → 비밀 열기 (공모자만 아는 진입) */
+let diceTaps=0, diceTimer=null;
+function diceTap(){
+  diceTaps++;
+  clearTimeout(diceTimer);
+  diceTimer=setTimeout(()=>{ diceTaps=0; }, 1500);
+  if(diceTaps>=5){ diceTaps=0; partySecret(); }
 }
 
 /* 비밀 모달 */
